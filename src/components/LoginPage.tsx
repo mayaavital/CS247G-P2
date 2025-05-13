@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Confetti from 'react-confetti';
 
 const triviaQuestions = [
-  {
-    question: 'In what year was Stanford University founded?',
-    answer: '1885',
-  },
+  // {
+  //   question: 'In what year was Stanford University founded?',
+  //   answer: '1885',
+  // },
   {
     question: "What is the name of the iconic tower on Stanford's campus?",
     answer: 'Hoover Tower',
+    requiresImage: true
   },
   {
     question: 'What is the official color of Stanford University?',
@@ -73,14 +74,336 @@ const AcceptanceLetter = () => {
   );
 };
 
+const ForgotPassword = ({ onCancel, onNext }: { onCancel: () => void, onNext: () => void }) => {
+  const [digitsFound, setDigitsFound] = useState<{[key: string]: boolean}>({
+    '0': false, // First digit (1)
+    '1': false, // Second digit (8)
+    '2': false, // Third digit (8)
+    '3': false  // Fourth digit (5)
+  });
+  const [labelFade, setLabelFade] = useState(false);
+  const [showQuestion, setShowQuestion] = useState(false);
+
+  // Generate the SUNet ID from the found digits
+  const sunetId = [
+    digitsFound['0'] ? '1' : '_',
+    digitsFound['1'] ? '8' : '_',
+    digitsFound['2'] ? '8' : '_',
+    digitsFound['3'] ? '5' : '_'
+  ].join('');
+
+  // Set up the label fade and question reveal animation
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => {
+      setLabelFade(true);
+      
+      const questionTimer = setTimeout(() => {
+        setShowQuestion(true);
+      }, 500); // Start showing the question after fade-out completes
+      
+      return () => clearTimeout(questionTimer);
+    }, 1500); // Start fading after 1.5 seconds
+    
+    return () => clearTimeout(fadeTimer);
+  }, []);
+
+  const handleDigitFound = (position: string, digit: string) => {
+    if (!digitsFound[position]) {
+      const newDigitsFound = { ...digitsFound, [position]: true };
+      setDigitsFound(newDigitsFound);
+      
+      // Check if all digits have been found
+      if (Object.values(newDigitsFound).every(found => found)) {
+        // Simply proceed to the next screen after a short delay
+        setTimeout(() => {
+          onNext();
+        }, 1000);
+      }
+    }
+  };
+
+  // CSS classes for digit reveals
+  const getDigitRevealClass = (position: string) => `relative group ${digitsFound[position] ? 'digit-found' : ''}`;
+  const hiddenDigitClass = "absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-bold text-[#8C1515] select-none";
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col">
+      {/* Header with hidden digit "1" */}
+      <header className="bg-[#8C1515] text-white p-2 flex items-center justify-between">
+        <div className="flex items-center">
+          <button className={getDigitRevealClass('0')}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span 
+              className={hiddenDigitClass}
+              onMouseEnter={() => handleDigitFound('0', '1')}
+            >
+              1
+            </span>
+          </button>
+          <div className="text-lg font-bold">Stanford | Accounts</div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <button className="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            StanfordYou
+          </button>
+          <button className="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Help
+          </button>
+          <button className="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            Sign-In
+          </button>
+        </div>
+      </header>
+
+      {/* Left side navigation with hidden digits */}
+      <div className="flex flex-1">
+        <div className="w-12 bg-gray-100 flex flex-col items-center pt-4 space-y-6">
+          <a href="#" className={getDigitRevealClass('1')}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span 
+              className={hiddenDigitClass}
+              onMouseEnter={() => handleDigitFound('1', '8')}
+            >
+              8
+            </span>
+          </a>
+          <a href="#" className="text-gray-500 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </a>
+          <a href="#" className="text-gray-500 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </a>
+          <a href="#" className={getDigitRevealClass('2')}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span 
+              className={hiddenDigitClass}
+              onMouseEnter={() => handleDigitFound('2', '8')}
+            >
+              8
+            </span>
+          </a>
+          <a href="#" className={getDigitRevealClass('3')}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span 
+              className={hiddenDigitClass}
+              onMouseEnter={() => handleDigitFound('3', '5')}
+            >
+              5
+            </span>
+          </a>
+          <a href="#" className="text-gray-500 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </a>
+          <a href="#" className="text-gray-500 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </a>
+        </div>
+
+        <div className="flex-1 p-6">
+          <div className="flex items-center mb-6">
+            <div className="bg-[#8C1515] p-3 rounded-lg mr-4 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Forgot Password</h1>
+              <div className="text-sm text-gray-600 flex items-center">
+                <span>Home</span>
+                <span className="mx-2">/</span>
+                <span>Password Management</span>
+                <span className="mx-2">/</span>
+                <span>Forgot Password</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-lg shadow-sm mb-6 relative">
+            <div className="mb-6">
+              <div className="block mb-2 font-bold relative h-6">
+                <span 
+                  className={`absolute transition-opacity duration-500 ${labelFade ? 'opacity-0' : 'opacity-100'}`}
+                >
+                  * SUNet ID
+                </span>
+                <span 
+                  className={`absolute text-[#8C1515] transition-opacity duration-500 ${showQuestion ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  When was Stanford REALLY founded?
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  id="sunet-id"
+                  type="text"
+                  className="w-full p-2 border border-gray-300 rounded font-mono text-center text-xl tracking-widest"
+                  value={sunetId}
+                  readOnly
+                  placeholder="_ _ _ _"
+                />
+              </div>
+              <div className="text-xs text-gray-500 mt-1">Hover around the page to find the hidden digits</div>
+              <div className="flex justify-between mt-2">
+                <div className="text-xs font-medium">
+                  {digitsFound['0'] ? <span className="text-green-600">First digit found</span> : "Find first digit"}
+                </div>
+                <div className="text-xs font-medium">
+                  {digitsFound['1'] ? <span className="text-green-600">Second digit found</span> : "Find second digit"}
+                </div>
+                <div className="text-xs font-medium">
+                  {digitsFound['2'] ? <span className="text-green-600">Third digit found</span> : "Find third digit"}
+                </div>
+                <div className="text-xs font-medium">
+                  {digitsFound['3'] ? <span className="text-green-600">Fourth digit found</span> : "Find fourth digit"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <button 
+                onClick={onCancel}
+                className="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded font-medium"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={onNext}
+                className="bg-[#00505c] hover:bg-[#003d47] text-white px-6 py-2 rounded font-medium"
+                disabled={sunetId !== "1885"}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex items-start">
+            <div className="bg-blue-500 text-white rounded-full p-1 mr-4 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p>If you know your password, you should change it by visiting the <a href="#" className={getDigitRevealClass('0')}>
+                change password page
+                <span 
+                  className={hiddenDigitClass}
+                  onMouseEnter={() => handleDigitFound('0', '1')}
+                >
+                  1
+                </span>
+              </a>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CSS for styling the found digits */}
+      <style>{`
+        .digit-found {
+          position: relative;
+        }
+        .digit-found::after {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          background-color: #10B981;
+          border-radius: 50%;
+          top: -5px;
+          right: -5px;
+        }
+      `}</style>
+
+      {/* Footer */}
+      <div className="mt-auto">
+        <div className="bg-[#8C1515] text-white p-5">
+          <div className="flex justify-center mb-4">
+            <img src="/stanford_logo.png" alt="Stanford University" className="h-10" />
+          </div>
+          <div className="flex justify-center space-x-4 text-sm mb-2">
+            <a href="#" className="hover:underline">Stanford Home</a>
+            <a href="#" className="hover:underline">Maps & Directions</a>
+            <a href="#" className="hover:underline">Search Stanford</a>
+            <a href="#" className="hover:underline">Emergency Info</a>
+          </div>
+          <div className="flex justify-center space-x-4 text-sm mb-3">
+            <a href="#" className="hover:underline">Terms of Use</a>
+            <a href="#" className="hover:underline">Privacy</a>
+            <a href="#" className="hover:underline">Copyright</a>
+            <a href="#" className="hover:underline">Trademarks</a>
+            <a href="#" className="hover:underline">Non-Discrimination</a>
+            <a href="#" className="hover:underline">Accessibility</a>
+          </div>
+          <div className="text-center text-sm">
+            © Stanford University, Stanford, California 94305.
+          </div>
+        </div>
+        <div className="bg-gray-100 p-1 text-xs text-gray-600">
+          Release 1.0
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
   const [step, setStep] = useState(0);
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzingProgress, setAnalyzingProgress] = useState(0);
+  const [analysisResult, setAnalysisResult] = useState<'success' | 'failure' | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const currentQuestion = triviaQuestions[step];
+  const requiresImage = currentQuestion.requiresImage;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim().toLowerCase() === triviaQuestions[step].answer.toLowerCase()) {
+    
+    if (requiresImage) {
+      if (analysisResult === 'success') {
+        // Reset for next question
+        setImageUrl(null);
+        setIsAnalyzing(false);
+        setAnalyzingProgress(0);
+        setAnalysisResult(null);
+        
+        if (step === triviaQuestions.length - 1) {
+          onSuccess();
+        } else {
+          setStep(step + 1);
+        }
+      } else if (!isAnalyzing && !analysisResult) {
+        setError('Please upload an image and wait for analysis to complete.');
+      }
+    } else if (input.trim().toLowerCase() === currentQuestion.answer.toLowerCase()) {
       setInput('');
       setError('');
       if (step === triviaQuestions.length - 1) {
@@ -93,21 +416,166 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImageUrl(result);
+        simulateImageAnalysis();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const simulateImageAnalysis = () => {
+    setIsAnalyzing(true);
+    setAnalyzingProgress(0);
+    setAnalysisResult(null);
+    
+    // Mock a progressive analysis
+    const interval = setInterval(() => {
+      setAnalyzingProgress(prev => {
+        const newProgress = prev + 10;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setIsAnalyzing(false);
+          
+          // Simulate successful analysis 80% of the time
+          // In a real implementation, this would use actual computer vision
+          const isSuccess = Math.random() < 0.8;
+          setAnalysisResult(isSuccess ? 'success' : 'failure');
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 300);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const retryAnalysis = () => {
+    setAnalysisResult(null);
+    setImageUrl(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center">
       <div className="bg-white shadow-lg rounded-lg p-10 max-w-lg w-full">
         <h2 className="text-2xl font-bold text-[#8C1515] mb-6">Answer these questions to recover your account</h2>
         <form onSubmit={handleSubmit}>
-          <div className="mb-4 text-lg">{triviaQuestions[step].question}</div>
-          <input
-            className="w-full p-2 border border-gray-300 rounded mb-4"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Your answer"
-            autoFocus
-          />
+          <div className="mb-4 text-lg">{currentQuestion.question}</div>
+          
+          {requiresImage ? (
+            <div className="mb-4">
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+              />
+              
+              {!imageUrl ? (
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={triggerFileInput}
+                >
+                  <div className="text-gray-500 mb-2">Click to upload a photo of Hoover Tower</div>
+                  <div className="text-sm text-gray-400">Take a clear photo or choose from your gallery</div>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <div className="relative rounded-lg overflow-hidden mb-3">
+                    <img 
+                      src={imageUrl} 
+                      alt="Uploaded" 
+                      className="w-full h-48 object-cover"
+                    />
+                    
+                    {isAnalyzing && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-white">
+                        <div className="text-lg mb-2">Analyzing image...</div>
+                        <div className="w-3/4 bg-gray-300 rounded-full h-2.5">
+                          <div 
+                            className="bg-blue-600 h-2.5 rounded-full" 
+                            style={{ width: `${analyzingProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {analysisResult === 'success' && (
+                      <div className="absolute inset-0 bg-green-500 bg-opacity-50 flex items-center justify-center text-white">
+                        <div className="bg-white bg-opacity-90 rounded-lg p-3 text-green-600 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Hoover Tower recognized!
+                        </div>
+                      </div>
+                    )}
+                    
+                    {analysisResult === 'failure' && (
+                      <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center text-white">
+                        <div className="bg-white bg-opacity-90 rounded-lg p-3 text-red-600 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Not recognized as Hoover Tower
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <button 
+                      type="button" 
+                      className="text-gray-600 bg-gray-100 px-3 py-1 rounded text-sm"
+                      onClick={triggerFileInput}
+                    >
+                      Change photo
+                    </button>
+                    
+                    {analysisResult === 'failure' && (
+                      <button 
+                        type="button" 
+                        className="text-white bg-blue-500 px-3 py-1 rounded text-sm"
+                        onClick={retryAnalysis}
+                      >
+                        Try again
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+            </div>
+          ) : (
+            <input
+              className="w-full p-2 border border-gray-300 rounded mb-4"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Your answer"
+              autoFocus
+            />
+          )}
+          
           {error && <div className="text-red-600 mb-2">{error}</div>}
-          <button type="submit" className="w-full bg-[#8C1515] text-white py-2 rounded font-medium">Submit</button>
+          
+          <button 
+            type="submit" 
+            className={`w-full py-2 rounded font-medium ${
+              requiresImage && analysisResult === 'success'
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-[#8C1515] text-white'
+            }`}
+          >
+            {requiresImage && analysisResult === 'success' ? 'Continue' : 'Submit'}
+          </button>
         </form>
         <div className="mt-4 text-sm text-gray-500">Question {step + 1} of {triviaQuestions.length}</div>
       </div>
@@ -117,11 +585,21 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
 
 const LoginPage: React.FC = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showTrivia, setShowTrivia] = useState(false);
   const [triviaSuccess, setTriviaSuccess] = useState(false);
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
+    setShowForgotPassword(true);
+  };
+
+  const handleForgotPasswordCancel = () => {
+    setShowForgotPassword(false);
+  };
+
+  const handleForgotPasswordNext = () => {
+    setShowForgotPassword(false);
     setShowTrivia(true);
   };
 
@@ -176,7 +654,13 @@ const LoginPage: React.FC = () => {
           </div>
           <div>
             <a href="#" className="text-[#8C1515] hover:underline block mb-2">LOGIN HELP</a>
-            <a href="#" className="text-[#8C1515] hover:underline block" onClick={handleForgotPassword}>FORGOT YOUR PASSWORD</a>
+            <a 
+              href="#" 
+              className="text-[#8C1515] hover:underline block" 
+              onClick={handleForgotPassword}
+            >
+              FORGOT YOUR PASSWORD
+            </a>
           </div>
         </div>
       </div>
@@ -266,7 +750,7 @@ const LoginPage: React.FC = () => {
               <div className="mt-6 text-center">
                 <a href="https://axess.stanford.edu/help" className="text-white hover:underline block mb-2">LOGIN HELP</a>
                 <a
-                  href="https://accounts.stanford.edu/reset-password"
+                  href="#"
                   className="text-white hover:underline block z-40 relative"
                   style={{ pointerEvents: 'auto' }}
                   onClick={handleForgotPassword}
@@ -289,6 +773,7 @@ const LoginPage: React.FC = () => {
 
   if (showTrivia && triviaSuccess) return <AcceptanceLetter />;
   if (showTrivia) return <TriviaRecovery onSuccess={() => setTriviaSuccess(true)} />;
+  if (showForgotPassword) return <ForgotPassword onCancel={handleForgotPasswordCancel} onNext={handleForgotPasswordNext} />;
   return showLoginForm ? <LoginForm /> : <MainPage />;
 };
 
