@@ -45,10 +45,44 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
   const [disabledButtons, setDisabledButtons] = useState<{
     [key: string]: boolean;
   }>({});
+  const [availableLetters, setAvailableLetters] = useState<string[]>([]);
+  const [filledLetters, setFilledLetters] = useState<string[]>([]);
+  const [blankPositions, setBlankPositions] = useState<number[]>([]);
+
+  // Fisher-Yates shuffle algorithm
+  const shuffleArray = (array: string[]) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
 
   useEffect(() => {
     if (correctGuesses === 3) {
       setShowWordScramble(true);
+      // Initialize available letters and blank positions
+      const allLetters = [
+        "C",
+        "O",
+        "N",
+        "C",
+        "E",
+        "R",
+        "T",
+        "S",
+        "A",
+        "T",
+        "F",
+        "R",
+        "O",
+        "S",
+        "T",
+      ];
+      setAvailableLetters(shuffleArray(allLetters));
+      setFilledLetters(Array(15).fill("")); // 14 positions for "CONCERTS AT FROST"
+      setBlankPositions([0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]); // Positions for blanks (excluding space at 8)
     }
   }, [correctGuesses]);
 
@@ -100,8 +134,52 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
     }
   };
 
+  const handleLetterClick = (letter: string, index: number) => {
+    // Find the first empty position
+    const emptyIndex = filledLetters.findIndex((letter) => letter === "");
+    if (emptyIndex !== -1) {
+      const newFilledLetters = [...filledLetters];
+      newFilledLetters[emptyIndex] = letter;
+      setFilledLetters(newFilledLetters);
+
+      // Remove the letter from available letters
+      const newAvailableLetters = [...availableLetters];
+      newAvailableLetters.splice(index, 1);
+      setAvailableLetters(newAvailableLetters);
+
+      // Update the scramble answer
+      setScrambleAnswer(newFilledLetters.join(""));
+    }
+  };
+
+  const handleFilledLetterClick = (index: number) => {
+    if (filledLetters[index] !== "") {
+      // Add the letter back to available letters
+      setAvailableLetters([...availableLetters, filledLetters[index]]);
+
+      // Remove the letter from filled letters
+      const newFilledLetters = [...filledLetters];
+      newFilledLetters[index] = "";
+      setFilledLetters(newFilledLetters);
+
+      // Update the scramble answer
+      setScrambleAnswer(newFilledLetters.join(""));
+    }
+  };
+
   const handleScrambleSubmit = () => {
-    if (scrambleAnswer.toUpperCase() === finalAnswer) {
+    // Insert spaces at the correct positions (after "CONCERTS" and "AT")
+    const answerWithSpaces = filledLetters
+      .map((letter, index) => {
+        if (index === 8 || index === 10) {
+          return " " + letter;
+        }
+        return letter;
+      })
+      .join("")
+      .trim();
+
+    if (answerWithSpaces.toUpperCase() === finalAnswer) {
       setScrambleResult("Congratulations! You solved the puzzle!");
       setScrambleResultClass("scramble-result correct");
       onSuccess();
@@ -291,31 +369,38 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
         {showWordScramble && (
           <div className="word-scramble-section p-8 bg-gray-50 rounded-lg">
             <h2 className="text-xl font-semibold mb-6 text-center">
-              Unscramble the Letters in the Text Input below
+              What do these three artists have in common?
             </h2>
             <div className="flex justify-center gap-2 mb-6">
-              {["G", "F", "T", "S", "N", "R", "C", "O", "E"].map(
-                (letter, index) => (
-                  <span
-                    key={index}
-                    className="letter p-3 bg-[#8C1515] text-white rounded"
-                  >
-                    {letter}
-                  </span>
-                )
-              )}
+              {availableLetters.map((letter, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleLetterClick(letter, index)}
+                  className="letter p-3 bg-[#8C1515] text-white rounded hover:bg-[#6B0F0F] transition-colors cursor-pointer"
+                >
+                  {letter}
+                </button>
+              ))}
             </div>
-            <div className="text-2xl mb-6 tracking-widest text-center">
-              _ _ _ _ _ _ _ _ at _ _ _ _ _
+            <div className="text-2xl mb-6 tracking-widest text-center flex justify-center gap-2">
+              {filledLetters.map((letter, index) => (
+                <React.Fragment key={index}>
+                  {index === 8 && <div className="w-4" />}
+                  {index === 10 && <div className="w-4" />}
+                  <span
+                    onClick={() => handleFilledLetterClick(index)}
+                    className={`w-8 h-8 flex items-center justify-center cursor-pointer ${
+                      letter
+                        ? "bg-[#8C1515] text-white rounded"
+                        : "border-b-2 border-gray-400"
+                    }`}
+                  >
+                    {letter || "_"}
+                  </span>
+                </React.Fragment>
+              ))}
             </div>
             <div className="flex justify-center gap-4">
-              <input
-                type="text"
-                value={scrambleAnswer}
-                onChange={(e) => setScrambleAnswer(e.target.value)}
-                placeholder="Enter your answer"
-                className="p-3 border-2 border-[#8C1515] rounded w-64"
-              />
               <button
                 onClick={handleScrambleSubmit}
                 className="p-3 bg-[#8C1515] text-white rounded hover:bg-[#6B0F0F] transition-colors"
