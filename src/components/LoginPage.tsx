@@ -865,6 +865,7 @@ const LoginPage: React.FC = () => {
   const [showTrivia, setShowTrivia] = useState(false);
   const [showMusicPuzzle, setShowMusicPuzzle] = useState(false);
   const [triviaSuccess, setTriviaSuccess] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(true);
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -1091,20 +1092,72 @@ const LoginPage: React.FC = () => {
     </div>
   );
 
-  if (showTrivia && triviaSuccess && showMusicPuzzle)
-    return <AcceptanceLetter />;
-  if (showTrivia && triviaSuccess)
-    return <MusicPuzzle onSuccess={() => setShowMusicPuzzle(true)} />;
-  if (showTrivia)
-    return <TriviaRecovery onSuccess={() => setTriviaSuccess(true)} />;
-  if (showForgotPassword)
-    return (
-      <ForgotPassword
-        onCancel={handleForgotPasswordCancel}
-        onNext={handleForgotPasswordNext}
-      />
-    );
-  return showLoginForm ? <LoginForm /> : <MainPage />;
+  return (
+    <>
+      {showIntroModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-8 relative">
+            <div className="flex items-center mb-4">
+              <svg
+                className="h-8 w-8 text-[#8C1515] mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h2 className="text-2xl font-bold text-[#8C1515]">
+                Stanford Puzzle Login
+              </h2>
+            </div>
+            <div className="mb-4 text-gray-700">
+              <p className="mb-2 font-semibold">IT Notice:</p>
+              <p>
+                You are a high school senior that just got an application status
+                update. You <span className="font-bold">HAVE</span> to log in to
+                get the status update, but you forgot your password. Navigate to
+                the correct links to recover your password, solving Stanford
+                puzzles as you go.
+              </p>
+              <p className="mt-4">
+                <strong>Objective:</strong> Recover your password and access
+                your application status by solving each puzzle and following the
+                clues!
+              </p>
+            </div>
+            <button
+              className="mt-4 bg-[#8C1515] text-white px-6 py-2 rounded font-medium hover:bg-[#6B0F0F] transition-colors w-full"
+              onClick={() => setShowIntroModal(false)}
+            >
+              Start Game
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* The rest of your page logic */}
+      {showTrivia && triviaSuccess && showMusicPuzzle && <AcceptanceLetter />}
+      {showTrivia && triviaSuccess && !showMusicPuzzle && (
+        <MusicPuzzle onSuccess={() => setShowMusicPuzzle(true)} />
+      )}
+      {showTrivia && !triviaSuccess && (
+        <TriviaRecovery onSuccess={() => setTriviaSuccess(true)} />
+      )}
+      {showForgotPassword && (
+        <ForgotPassword
+          onCancel={handleForgotPasswordCancel}
+          onNext={handleForgotPasswordNext}
+        />
+      )}
+      {!showLoginForm && !showForgotPassword && !showTrivia && <MainPage />}
+      {showLoginForm && <LoginForm />}
+    </>
+  );
 };
 
 export default LoginPage;
