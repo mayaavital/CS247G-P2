@@ -453,7 +453,7 @@ const ForgotPassword = ({
                   placeholder="_ _ _ _"
                 />
               </div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-sm text-gray-500 mt-1">
                 Hover around the page to find the hidden digits
               </div>
               <div className="flex justify-between mt-2">
@@ -732,7 +732,7 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
                   onClick={triggerFileInput}
                 >
                   <div className="text-gray-500 mb-2">
-                    Click to upload a photo of Hoover Tower
+                    Click to upload a photo of the Tower
                   </div>
                   <div className="text-sm text-gray-400">
                     Take a clear photo or choose from your gallery
