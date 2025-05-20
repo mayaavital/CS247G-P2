@@ -48,6 +48,7 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
   const [availableLetters, setAvailableLetters] = useState<string[]>([]);
   const [filledLetters, setFilledLetters] = useState<string[]>([]);
   const [blankPositions, setBlankPositions] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
 
   // Fisher-Yates shuffle algorithm
   const shuffleArray = (array: string[]) => {
@@ -164,6 +165,22 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
 
       // Update the scramble answer
       setScrambleAnswer(newFilledLetters.join(""));
+    }
+  };
+
+  const handleHint = () => {
+    if (!hintUsed) {
+      const newFilledLetters = [...filledLetters];
+      newFilledLetters[8] = "A";
+      newFilledLetters[9] = "T";
+      setFilledLetters(newFilledLetters);
+
+      // Remove A and T from available letters
+      const newAvailableLetters = availableLetters.filter(
+        (letter) => letter !== "A"
+      );
+      setAvailableLetters(newAvailableLetters);
+      setHintUsed(true);
     }
   };
 
@@ -407,6 +424,14 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
               >
                 Submit
               </button>
+              {!hintUsed && (
+                <button
+                  onClick={handleHint}
+                  className="p-3 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Get Hint
+                </button>
+              )}
             </div>
             {scrambleResult && (
               <div

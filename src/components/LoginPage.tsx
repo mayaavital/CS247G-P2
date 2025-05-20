@@ -808,7 +808,13 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
                     <button
                       type="button"
                       className="text-gray-600 bg-gray-100 px-3 py-1 rounded text-sm"
-                      onClick={triggerFileInput}
+                      onClick={() => {
+                        setImageUrl(null);
+                        setIsAnalyzing(false);
+                        setAnalyzingProgress(0);
+                        setAnalysisResult(null);
+                        triggerFileInput();
+                      }}
                     >
                       Change photo
                     </button>
