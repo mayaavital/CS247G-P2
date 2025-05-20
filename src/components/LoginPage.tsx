@@ -859,11 +859,86 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
   );
 };
 
+// New RiddleHunt component
+const RiddleHunt = ({ onSuccess }: { onSuccess: () => void }) => {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState("");
+  const [solved, setSolved] = useState(false);
+  const secretCode = "4ipyn"; // Change as needed
+
+  // Example riddles (replace with your own)
+  const riddles = [
+    "Where voices rise and wisdom flows. Where thought is weighed and reason grows. Stand I to ignite the scholar's spark. Not a throne, but raised I be, The teacher's echo speaks through me. The pieces you need are here to be found.",
+    "They guide, assist, and sometimes grade,\nTheir wisdom lends the teacher aid.\nNot center stage, but close at hand,\nThey help you learn and understand.\nBehind their post, where papers dwell,\nThe pieces you need now rest as well.\nSeek the table where helpers stay—\nThe answer waits not far away.",
+    "Not far from minds where ideas ignite. \n I sit in silence, hidden in light.\nThough made of stone, I bear no wall,\nJust stacked and steady, strong and small.\nYou pass me daily, unaware,\nBut atop my crown, a clue lays there.\nSeek the peak where stillness talks—\nThe pieces waits among the rocks.",
+    "I do not speak, yet words appear, When markers touch, my thoughts are clear. Beside the place where the tower stands, I quietly play a teaching part. Though small in size, I help convey, The pieces are not far away. Look where ideas are often drawn—The board that's white, but never gone.",
+    "Where cool drops gently fall by the door where footsteps pass—the last pieces you need to find are here.",
+  ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim() === secretCode) {
+      setSolved(true);
+      setError("");
+      setTimeout(onSuccess, 1200);
+    } else {
+      setError("Incorrect code. Try again!");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center py-12">
+      <div className="bg-white shadow-lg rounded-lg p-10 max-w-2xl w-full font-serif relative z-10">
+        <h2 className="text-2xl font-bold text-[#8C1515] mb-6 text-center">
+          Riddle Hunt
+        </h2>
+        <div className="mb-8 space-y-4">
+          {riddles.map((riddle, idx) => (
+            <div
+              key={idx}
+              className="bg-gray-100 p-4 rounded text-lg text-gray-700"
+            >
+              <span className="font-semibold">Clue {idx + 1}:</span> {riddle}
+            </div>
+          ))}
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col items-center">
+          <label className="mb-2 font-medium">
+            Enter the secret code you uncover after assembling the puzzle:
+          </label>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="p-2 border border-gray-300 rounded mb-2 w-64 text-center"
+            placeholder="Secret code in lowercase"
+            disabled={solved}
+          />
+          <button
+            type="submit"
+            className="bg-[#8C1515] text-white px-6 py-2 rounded font-medium hover:bg-[#6B0F0F] transition-colors mt-2"
+            disabled={solved}
+          >
+            Submit
+          </button>
+          {error && <div className="text-red-600 mt-2">{error}</div>}
+          {solved && (
+            <div className="text-green-600 mt-2 font-bold">
+              Correct! Proceeding...
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const LoginPage: React.FC = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showTrivia, setShowTrivia] = useState(false);
   const [showMusicPuzzle, setShowMusicPuzzle] = useState(false);
+  const [showRiddleHunt, setShowRiddleHunt] = useState(false);
   const [triviaSuccess, setTriviaSuccess] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
 
@@ -1141,7 +1216,12 @@ const LoginPage: React.FC = () => {
       )}
 
       {/* The rest of your page logic */}
-      {showTrivia && triviaSuccess && showMusicPuzzle && <AcceptanceLetter />}
+      {showTrivia && triviaSuccess && showMusicPuzzle && showRiddleHunt && (
+        <AcceptanceLetter />
+      )}
+      {showTrivia && triviaSuccess && showMusicPuzzle && !showRiddleHunt && (
+        <RiddleHunt onSuccess={() => setShowRiddleHunt(true)} />
+      )}
       {showTrivia && triviaSuccess && !showMusicPuzzle && (
         <MusicPuzzle onSuccess={() => setShowMusicPuzzle(true)} />
       )}

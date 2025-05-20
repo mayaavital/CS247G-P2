@@ -18,7 +18,7 @@ const correctAnswers = {
 } as const;
 
 const highlightLetters = {
-  "grateful-dead": ["g", "f", "t"],
+  "grateful-dead": ["f", "t"],
   "louis-armstrong": ["s", "n", "r"],
   doechii: ["c", "o", "e"],
 };
@@ -369,7 +369,7 @@ const MusicPuzzle: React.FC<MusicPuzzleProps> = ({ onSuccess }) => {
         {showWordScramble && (
           <div className="word-scramble-section p-8 bg-gray-50 rounded-lg">
             <h2 className="text-xl font-semibold mb-6 text-center">
-              What do these three artists have in common?
+              What Stanford thing do these three artists have in common?
             </h2>
             <div className="flex justify-center gap-2 mb-6">
               {availableLetters.map((letter, index) => (
