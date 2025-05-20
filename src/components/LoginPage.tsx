@@ -689,7 +689,7 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
 
           // Simulate successful analysis 80% of the time
           // In a real implementation, this would use actual computer vision
-          const isSuccess = Math.random() < 0.8;
+          const isSuccess = Math.random() < 0.9;
           setAnalysisResult(isSuccess ? "success" : "failure");
           return 100;
         }
@@ -892,6 +892,10 @@ const RiddleHunt = ({ onSuccess }: { onSuccess: () => void }) => {
         <h2 className="text-2xl font-bold text-[#8C1515] mb-6 text-center">
           Riddle Hunt
         </h2>
+        <h3 className="mb-2 font-medium text-center text-gray-600">
+          Each clue leads you to the puzzle pieces you need to uncover the
+          secret code.
+        </h3>
         <div className="mb-8 space-y-4">
           {riddles.map((riddle, idx) => (
             <div
