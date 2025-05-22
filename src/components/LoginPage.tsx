@@ -622,6 +622,8 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
   const [analysisResult, setAnalysisResult] = useState<
     "success" | "failure" | null
   >(null);
+  const [wrongAttempts, setWrongAttempts] = useState(0);
+  const [showHintModal, setShowHintModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentQuestion = triviaQuestions[step];
@@ -637,6 +639,7 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
         setIsAnalyzing(false);
         setAnalyzingProgress(0);
         setAnalysisResult(null);
+        setWrongAttempts(0);
 
         if (step === triviaQuestions.length - 1) {
           onSuccess();
@@ -651,6 +654,7 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
     ) {
       setInput("");
       setError("");
+      setWrongAttempts(0);
       if (step === triviaQuestions.length - 1) {
         onSuccess();
       } else {
@@ -658,6 +662,11 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
       }
     } else {
       setError("Incorrect! Try again.");
+      const newWrongAttempts = wrongAttempts + 1;
+      setWrongAttempts(newWrongAttempts);
+      if (newWrongAttempts === 3) {
+        setShowHintModal(true);
+      }
     }
   };
 
@@ -833,13 +842,15 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
               )}
             </div>
           ) : (
-            <input
-              className="w-full p-2 border border-gray-300 rounded mb-4"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Your answer"
-              autoFocus
-            />
+            <div className="flex items-center gap-2">
+              <input
+                className="w-full p-2 border border-gray-300 rounded mb-4"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="your answer"
+                autoFocus
+              />
+            </div>
           )}
 
           {error && <div className="text-red-600 mb-2">{error}</div>}
@@ -861,6 +872,40 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
           Question {step + 1} of {triviaQuestions.length}
         </div>
       </div>
+
+      {/* Hint Modal */}
+      {showHintModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+            <button
+              onClick={() => setShowHintModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+            <h3 className="text-xl font-bold text-[#8C1515] mb-4">
+              Need a Hint?
+            </h3>
+            <div className="text-gray-700">
+              {/* Add your hint text here */}
+              look at the lines to uncover the (hex)code
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
