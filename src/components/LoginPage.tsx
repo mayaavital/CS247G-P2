@@ -19,17 +19,58 @@ const triviaQuestions = [
   },
 ];
 
-const AcceptanceLetter = () => {
+const StatsPage = ({ reactionVideo, timeTaken }: { reactionVideo: string, timeTaken: number }) => {
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center py-12">
+      <div className="bg-white shadow-lg rounded-lg p-10 max-w-2xl w-full">
+        <h2 className="text-2xl font-bold text-[#8C1515] mb-6 text-center">You got into Stanford!</h2>
+        
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold mb-4">Reaction Video</h3>
+          <video 
+            src={reactionVideo} 
+            controls 
+            className="w-full rounded-lg shadow-md"
+          />
+        </div>
+
+        <div className="bg-gray-100 p-6 rounded-lg">
+          <h3 className="text-xl font-semibold mb-4">Puzzle Stats</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-4 rounded shadow">
+              <div className="text-sm text-gray-600">Time to Complete</div>
+              <div className="text-2xl font-bold text-[#8C1515]">
+                {Math.floor(timeTaken / 60)}m {timeTaken % 60}s
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded shadow">
+              <div className="text-sm text-gray-600">Puzzles Solved</div>
+              <div className="text-2xl font-bold text-[#8C1515]">3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AcceptanceLetter = ({ onShowStats }: { onShowStats: () => void }) => {
   // Get window size for confetti
   const [dimensions, setDimensions] = React.useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
+
   React.useEffect(() => {
     const handleResize = () =>
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Add scroll to top effect when component mounts
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   return (
@@ -38,8 +79,14 @@ const AcceptanceLetter = () => {
         width={dimensions.width}
         height={dimensions.height}
         colors={["#8C1515"]}
-        numberOfPieces={250}
-        recycle={false}
+        numberOfPieces={500}
+        recycle={true}
+        gravity={0.3}
+        initialVelocityY={20}
+        initialVelocityX={10}
+        tweenDuration={5000}
+        wind={0.05}
+        confettiSource={{ x: 0, y: 0, w: dimensions.width, h: 0 }}
       />
       <div className="bg-white shadow-lg rounded-lg p-12 max-w-2xl w-full font-serif relative z-10">
         {/* Stanford Logo and Header */}
@@ -110,6 +157,16 @@ const AcceptanceLetter = () => {
           520 Lasuen Mall, Old Union 221, Stanford, CA 94305-3005
           <br />
           Tel: (650) 723-2091 · Fax: (650) 725-2846
+        </div>
+        
+        {/* Add button at the bottom */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={onShowStats}
+            className="bg-[#8C1515] text-white px-6 py-2 rounded font-medium hover:bg-[#6B0F0F] transition-colors"
+          >
+            See Your Stats & Reaction
+          </button>
         </div>
       </div>
     </div>
@@ -612,6 +669,12 @@ const ForgotPassword = ({
   );
 };
 
+const LoadingScreen = () => (
+  <div className="fixed inset-0 bg-[#FAF9F6] flex items-center justify-center z-50">
+    <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-[#8C1515]"></div>
+  </div>
+);
+
 const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
   const [step, setStep] = useState(0);
   const [input, setInput] = useState("");
@@ -911,28 +974,45 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
 };
 
 // New RiddleHunt component
-const RiddleHunt = ({ onSuccess }: { onSuccess: () => void }) => {
+const RiddleHunt = ({ onSuccess, startRecording }: { onSuccess: () => void, startRecording: () => void }) => {
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [solved, setSolved] = useState(false);
-  const secretCode = "4ipyn"; // Change as needed
+  const [showLoading, setShowLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const secretCode = "4ipyn";
 
-  // Example riddles (replace with your own)
+  // Example riddles
   const riddles = [
     "Where voices rise and wisdom flows. Where thought is weighed and reason grows. Stand I to ignite the scholar's spark. Not a throne, but raised I be, The teacher's echo speaks through me. The pieces you need are here to be found.",
-    "They guide, assist, and sometimes grade,\nTheir wisdom lends the teacher aid.\nNot center stage, but close at hand,\nThey help you learn and understand.\nBehind their post, where papers dwell,\nThe pieces you need now rest as well.\nSeek the table where helpers stay—\nThe answer waits not far away.",
-    "Not far from minds where ideas ignite. \n I sit in silence, hidden in light.\nThough made of stone, I bear no wall,\nJust stacked and steady, strong and small.\nYou pass me daily, unaware,\nBut atop my crown, a clue lays there.\nSeek the peak where stillness talks—\nThe pieces waits among the rocks.",
+    "They guide, assist, and sometimes grade,\nTheir wisdom lends the teacher aid.\nNot center stage, but close at hand,\nThey help you learn and understand.\nBehind their post, where papers dwell,\nThe pieces you need now rest as well.\nSeek the table where helpers stay—The answer waits not far away.",
+    "Not far from minds where ideas ignite. \n I sit in silence, hidden in light.\nThough made of stone, I bear no wall,\nJust stacked and steady, strong and small.\nYou pass me daily, unaware,\nBut atop my crown, a clue lays there.\nSeek the peak where stillness talks—The pieces waits among the rocks.",
     "I do not speak, yet words appear, When markers touch, my thoughts are clear. Beside the place where the tower stands, I quietly play a teaching part. Though small in size, I help convey, The pieces are not far away. Look where ideas are often drawn—The board that's white, but never gone.",
     "Where cool drops gently fall by the door where footsteps pass—the last pieces you need to find are here.",
   ];
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newInput = e.target.value;
+    setInput(newInput);
+    
+    // Start recording if correct answer is entered and not already recording
+    if (newInput.trim() === secretCode && !isRecording) {
+      setIsRecording(true);
+      startRecording();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() === secretCode) {
+    if (input.trim() === secretCode && !solved) {
       setSolved(true);
       setError("");
-      setTimeout(onSuccess, 1200);
-    } else {
+      setShowLoading(true);
+      setTimeout(() => {
+        setShowLoading(false);
+        onSuccess();
+      }, 3000);
+    } else if (!solved) {
       setError("Incorrect code. Try again!");
     }
   };
@@ -964,7 +1044,7 @@ const RiddleHunt = ({ onSuccess }: { onSuccess: () => void }) => {
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             className="p-2 border border-gray-300 rounded mb-2 w-64 text-center"
             placeholder="Secret code in lowercase"
             disabled={solved}
@@ -984,6 +1064,7 @@ const RiddleHunt = ({ onSuccess }: { onSuccess: () => void }) => {
           )}
         </form>
       </div>
+      {showLoading && <LoadingScreen />}
     </div>
   );
 };
@@ -996,6 +1077,13 @@ const LoginPage: React.FC = () => {
   const [showRiddleHunt, setShowRiddleHunt] = useState(false);
   const [triviaSuccess, setTriviaSuccess] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
+  const [showStats, setShowStats] = useState(false);
+  const [reactionVideo, setReactionVideo] = useState<string>("");
+  const [startTime, setStartTime] = useState<number>(0);
+  const [timeTaken, setTimeTaken] = useState<number>(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -1009,6 +1097,65 @@ const LoginPage: React.FC = () => {
   const handleForgotPasswordNext = () => {
     setShowForgotPassword(false);
     setShowTrivia(true);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      recordedChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const videoURL = URL.createObjectURL(blob);
+        setReactionVideo(videoURL);
+      };
+
+      mediaRecorder.start();
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Stop the stream immediately after getting permission
+      stream.getTracks().forEach(track => track.stop());
+      setCameraPermissionGranted(true);
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      alert("Camera access is required for the game. Please enable it and refresh the page.");
+    }
+  };
+
+  const handleStartGame = async () => {
+    if (!cameraPermissionGranted) {
+      await requestCameraPermission();
+    } else {
+      setShowIntroModal(false);
+      setStartTime(Date.now());
+    }
+  };
+
+  const handleShowStats = () => {
+    stopRecording();
+    setTimeTaken(Math.floor((Date.now() - startTime) / 1000));
+    setShowStats(true);
   };
 
   const LoginForm = () => (
@@ -1259,23 +1406,33 @@ const LoginPage: React.FC = () => {
                 your application status by solving each puzzle and following the
                 clues!
               </p>
+              <p className="mt-4 text-[#8C1515] font-semibold">
+                Note: Camera access is required to record your reaction when you receive your acceptance letter!
+              </p>
             </div>
             <button
               className="mt-4 bg-[#8C1515] text-white px-6 py-2 rounded font-medium hover:bg-[#6B0F0F] transition-colors w-full"
-              onClick={() => setShowIntroModal(false)}
+              onClick={handleStartGame}
             >
-              Start Game
+              {cameraPermissionGranted ? "Start Game" : "Start Camera"}
             </button>
           </div>
         </div>
       )}
 
-      {/* The rest of your page logic */}
-      {showTrivia && triviaSuccess && showMusicPuzzle && showRiddleHunt && (
-        <AcceptanceLetter />
+      {showStats && (
+        <StatsPage reactionVideo={reactionVideo} timeTaken={timeTaken} />
+      )}
+      {showTrivia && triviaSuccess && showMusicPuzzle && showRiddleHunt && !showStats && (
+        <AcceptanceLetter onShowStats={handleShowStats} />
       )}
       {showTrivia && triviaSuccess && showMusicPuzzle && !showRiddleHunt && (
-        <RiddleHunt onSuccess={() => setShowRiddleHunt(true)} />
+        <RiddleHunt 
+          onSuccess={() => {
+            setShowRiddleHunt(true);
+          }}
+          startRecording={startRecording}
+        />
       )}
       {showTrivia && triviaSuccess && !showMusicPuzzle && (
         <MusicPuzzle onSuccess={() => setShowMusicPuzzle(true)} />
