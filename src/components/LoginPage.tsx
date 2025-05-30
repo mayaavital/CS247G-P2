@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Confetti from 'react-confetti';
+import MusicPuzzle from './MusicPuzzle';
 
 const triviaQuestions = [
   // {
