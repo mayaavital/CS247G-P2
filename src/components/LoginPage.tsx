@@ -19,17 +19,25 @@ const triviaQuestions = [
   },
 ];
 
-const StatsPage = ({ reactionVideo, timeTaken }: { reactionVideo: string, timeTaken: number }) => {
+const StatsPage = ({
+  reactionVideo,
+  timeTaken,
+}: {
+  reactionVideo: string;
+  timeTaken: number;
+}) => {
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center py-12">
       <div className="bg-white shadow-lg rounded-lg p-10 max-w-2xl w-full">
-        <h2 className="text-2xl font-bold text-[#8C1515] mb-6 text-center">You got into Stanford!</h2>
-        
+        <h2 className="text-2xl font-bold text-[#8C1515] mb-6 text-center">
+          You got into Stanford!
+        </h2>
+
         <div className="mb-8">
           <h3 className="text-xl font-semibold mb-4">Reaction Video</h3>
-          <video 
-            src={reactionVideo} 
-            controls 
+          <video
+            src={reactionVideo}
+            controls
             className="w-full rounded-lg shadow-md"
           />
         </div>
@@ -158,7 +166,7 @@ const AcceptanceLetter = ({ onShowStats }: { onShowStats: () => void }) => {
           <br />
           Tel: (650) 723-2091 · Fax: (650) 725-2846
         </div>
-        
+
         {/* Add button at the bottom */}
         <div className="mt-8 text-center">
           <button
@@ -181,13 +189,68 @@ const ForgotPassword = ({
   onNext: () => void;
 }) => {
   const [digitsFound, setDigitsFound] = useState<{ [key: string]: boolean }>({
-    "0": false, // First digit (1)
-    "1": false, // Second digit (8)
-    "2": false, // Third digit (8)
-    "3": false, // Fourth digit (5)
+    "0": false,
+    "1": false,
+    "2": false,
+    "3": false,
   });
   const [labelFade, setLabelFade] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
+  const [digitPlacements, setDigitPlacements] = useState<{
+    [key: string]: string;
+  }>({});
+  const [placementsReady, setPlacementsReady] = useState(false);
+  const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
+  const [showHint, setShowHint] = useState(false);
+
+  // Define all possible locations where digits can be hidden
+  const possibleLocations = [
+    "header-menu",
+    "header-user",
+    "header-help",
+    "header-signin",
+    "sidebar-home",
+    "sidebar-user",
+    "sidebar-group",
+    "sidebar-lock",
+    "sidebar-mail",
+    "sidebar-people",
+    "sidebar-document",
+    "footer-link",
+    "breadcrumb-home",
+    "breadcrumb-password",
+    "breadcrumb-forgot",
+  ];
+
+  // Randomly assign digits to locations on component mount
+  useEffect(() => {
+    const digits = ["1", "8", "8", "5"];
+    const shuffledLocations = [...possibleLocations].sort(
+      () => Math.random() - 0.5
+    );
+    const placements: { [key: string]: string } = {};
+
+    digits.forEach((digit, index) => {
+      placements[index.toString()] = shuffledLocations[index];
+    });
+
+    setDigitPlacements(placements);
+    setPlacementsReady(true);
+  }, []);
+
+  // Show hint after 30 seconds if no digits found
+  useEffect(() => {
+    const hintTimer = setTimeout(() => {
+      const foundCount = Object.values(digitsFound).filter(
+        (found) => found
+      ).length;
+      if (foundCount === 0) {
+        setShowHint(true);
+      }
+    }, 30000);
+
+    return () => clearTimeout(hintTimer);
+  }, [digitsFound]);
 
   // Generate the SUNet ID from the found digits
   const sunetId = [
@@ -204,10 +267,10 @@ const ForgotPassword = ({
 
       const questionTimer = setTimeout(() => {
         setShowQuestion(true);
-      }, 500); // Start showing the question after fade-out completes
+      }, 500);
 
       return () => clearTimeout(questionTimer);
-    }, 1500); // Start fading after 1.5 seconds
+    }, 1500);
 
     return () => clearTimeout(fadeTimer);
   }, []);
@@ -217,9 +280,7 @@ const ForgotPassword = ({
       const newDigitsFound = { ...digitsFound, [position]: true };
       setDigitsFound(newDigitsFound);
 
-      // Check if all digits have been found
       if (Object.values(newDigitsFound).every((found) => found)) {
-        // Simply proceed to the next screen after a short delay
         setTimeout(() => {
           onNext();
         }, 1000);
@@ -227,18 +288,72 @@ const ForgotPassword = ({
     }
   };
 
+  // Helper function to check if a location should have a digit
+  const getDigitForLocation = (location: string) => {
+    if (!placementsReady) return null;
+    const digitIndex = Object.keys(digitPlacements).find(
+      (key) => digitPlacements[key] === location
+    );
+    if (digitIndex !== undefined) {
+      const digits = ["1", "8", "8", "5"];
+      return { digitIndex, digit: digits[parseInt(digitIndex)] };
+    }
+    return null;
+  };
+
+  // Enhanced hover handlers
+  const handleLocationHover = (location: string) => {
+    setHoveredLocation(location);
+    const digitInfo = getDigitForLocation(location);
+    if (digitInfo && !digitsFound[digitInfo.digitIndex]) {
+      handleDigitFound(digitInfo.digitIndex, digitInfo.digit);
+    }
+  };
+
+  const handleLocationLeave = () => {
+    setHoveredLocation(null);
+  };
+
+  // Click handler as backup for touch devices
+  const handleLocationClick = (location: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const digitInfo = getDigitForLocation(location);
+    if (digitInfo && !digitsFound[digitInfo.digitIndex]) {
+      handleDigitFound(digitInfo.digitIndex, digitInfo.digit);
+    }
+  };
+
   // CSS classes for digit reveals
-  const getDigitRevealClass = (position: string) =>
-    `relative group ${digitsFound[position] ? "digit-found" : ""}`;
-  const hiddenDigitClass =
-    "absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-bold text-[#8C1515] select-none";
+  const getDigitRevealClass = (location: string) => {
+    const digitInfo = getDigitForLocation(location);
+    if (!digitInfo) return "";
+    const isHovered = hoveredLocation === location;
+    const isFound = digitsFound[digitInfo.digitIndex];
+    return `relative group cursor-pointer transition-all duration-200 ${
+      isFound ? "digit-found" : ""
+    } ${isHovered && !isFound ? "bg-red-100 bg-opacity-20" : ""}`;
+  };
+
+  // Don't render until placements are ready
+  if (!placementsReady) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+        <div className="text-[#8C1515] text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col">
-      {/* Header with hidden digit "1" */}
+      {/* Header with potentially hidden digits */}
       <header className="bg-[#8C1515] text-white p-2 flex items-center justify-between">
         <div className="flex items-center">
-          <button className={getDigitRevealClass("0")}>
+          <button
+            className={getDigitRevealClass("header-menu")}
+            onMouseEnter={(e) => handleLocationHover("header-menu")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("header-menu", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -253,17 +368,18 @@ const ForgotPassword = ({
                 d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
-            <span
-              className={hiddenDigitClass}
-              onMouseEnter={() => handleDigitFound("0", "1")}
-            >
-              1
-            </span>
           </button>
           <div className="text-lg font-bold">Stanford | Accounts</div>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="flex items-center">
+          <button
+            className={`flex items-center ${getDigitRevealClass(
+              "header-user"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("header-user")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("header-user", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-1"
@@ -280,7 +396,14 @@ const ForgotPassword = ({
             </svg>
             StanfordYou
           </button>
-          <button className="flex items-center">
+          <button
+            className={`flex items-center ${getDigitRevealClass(
+              "header-help"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("header-help")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("header-help", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-1"
@@ -297,7 +420,14 @@ const ForgotPassword = ({
             </svg>
             Help
           </button>
-          <button className="flex items-center">
+          <button
+            className={`flex items-center ${getDigitRevealClass(
+              "header-signin"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("header-signin")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("header-signin", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-1"
@@ -317,10 +447,16 @@ const ForgotPassword = ({
         </div>
       </header>
 
-      {/* Left side navigation with hidden digits */}
+      {/* Left side navigation with potentially hidden digits */}
       <div className="flex flex-1">
         <div className="w-12 bg-gray-100 flex flex-col items-center pt-4 space-y-6">
-          <a href="#" className={getDigitRevealClass("1")}>
+          <a
+            href="#"
+            className={getDigitRevealClass("sidebar-home")}
+            onMouseEnter={(e) => handleLocationHover("sidebar-home")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-home", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -335,14 +471,16 @@ const ForgotPassword = ({
                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
               />
             </svg>
-            <span
-              className={hiddenDigitClass}
-              onMouseEnter={() => handleDigitFound("1", "8")}
-            >
-              8
-            </span>
           </a>
-          <a href="#" className="text-gray-500 hover:text-gray-800">
+          <a
+            href="#"
+            className={`text-gray-500 hover:text-gray-800 ${getDigitRevealClass(
+              "sidebar-user"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("sidebar-user")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-user", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -358,7 +496,15 @@ const ForgotPassword = ({
               />
             </svg>
           </a>
-          <a href="#" className="text-gray-500 hover:text-gray-800">
+          <a
+            href="#"
+            className={`text-gray-500 hover:text-gray-800 ${getDigitRevealClass(
+              "sidebar-group"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("sidebar-group")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-group", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -374,7 +520,13 @@ const ForgotPassword = ({
               />
             </svg>
           </a>
-          <a href="#" className={getDigitRevealClass("2")}>
+          <a
+            href="#"
+            className={getDigitRevealClass("sidebar-lock")}
+            onMouseEnter={(e) => handleLocationHover("sidebar-lock")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-lock", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -389,14 +541,14 @@ const ForgotPassword = ({
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
             </svg>
-            <span
-              className={hiddenDigitClass}
-              onMouseEnter={() => handleDigitFound("2", "8")}
-            >
-              8
-            </span>
           </a>
-          <a href="#" className={getDigitRevealClass("3")}>
+          <a
+            href="#"
+            className={getDigitRevealClass("sidebar-mail")}
+            onMouseEnter={(e) => handleLocationHover("sidebar-mail")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-mail", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -411,14 +563,16 @@ const ForgotPassword = ({
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
               />
             </svg>
-            <span
-              className={hiddenDigitClass}
-              onMouseEnter={() => handleDigitFound("3", "5")}
-            >
-              5
-            </span>
           </a>
-          <a href="#" className="text-gray-500 hover:text-gray-800">
+          <a
+            href="#"
+            className={`text-gray-500 hover:text-gray-800 ${getDigitRevealClass(
+              "sidebar-people"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("sidebar-people")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-people", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -434,7 +588,15 @@ const ForgotPassword = ({
               />
             </svg>
           </a>
-          <a href="#" className="text-gray-500 hover:text-gray-800">
+          <a
+            href="#"
+            className={`text-gray-500 hover:text-gray-800 ${getDigitRevealClass(
+              "sidebar-document"
+            )}`}
+            onMouseEnter={(e) => handleLocationHover("sidebar-document")}
+            onMouseLeave={handleLocationLeave}
+            onClick={(e) => handleLocationClick("sidebar-document", e)}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -473,11 +635,34 @@ const ForgotPassword = ({
             <div>
               <h1 className="text-2xl font-bold">Forgot Password</h1>
               <div className="text-sm text-gray-600 flex items-center">
-                <span>Home</span>
+                <span
+                  className={getDigitRevealClass("breadcrumb-home")}
+                  onMouseEnter={(e) => handleLocationHover("breadcrumb-home")}
+                  onMouseLeave={handleLocationLeave}
+                  onClick={(e) => handleLocationClick("breadcrumb-home", e)}
+                >
+                  Home
+                </span>
                 <span className="mx-2">/</span>
-                <span>Password Management</span>
+                <span
+                  className={getDigitRevealClass("breadcrumb-password")}
+                  onMouseEnter={(e) =>
+                    handleLocationHover("breadcrumb-password")
+                  }
+                  onMouseLeave={handleLocationLeave}
+                  onClick={(e) => handleLocationClick("breadcrumb-password", e)}
+                >
+                  Password Management
+                </span>
                 <span className="mx-2">/</span>
-                <span>Forgot Password</span>
+                <span
+                  className={getDigitRevealClass("breadcrumb-forgot")}
+                  onMouseEnter={(e) => handleLocationHover("breadcrumb-forgot")}
+                  onMouseLeave={handleLocationLeave}
+                  onClick={(e) => handleLocationClick("breadcrumb-forgot", e)}
+                >
+                  Forgot Password
+                </span>
               </div>
             </div>
           </div>
@@ -510,9 +695,15 @@ const ForgotPassword = ({
                   placeholder="_ _ _ _"
                 />
               </div>
-              <div className="text-sm text-gray-500 mt-1">
+              <div className="text-xs text-gray-500 mt-1">
                 Hover around the page to find the hidden digits
               </div>
+              {showHint && (
+                <div className="text-xs text-[#8C1515] mt-2 p-2 bg-red-50 rounded border border-red-200">
+                  💡 Hint: Try hovering over buttons, icons, and text elements
+                  throughout the page. Look for subtle visual changes!
+                </div>
+              )}
               <div className="flex justify-between mt-2">
                 <div className="text-xs font-medium">
                   {digitsFound["0"] ? (
@@ -582,14 +773,14 @@ const ForgotPassword = ({
             <div>
               <p>
                 If you know your password, you should change it by visiting the{" "}
-                <a href="#" className={getDigitRevealClass("0")}>
+                <a
+                  href="#"
+                  className={getDigitRevealClass("footer-link")}
+                  onMouseEnter={(e) => handleLocationHover("footer-link")}
+                  onMouseLeave={handleLocationLeave}
+                  onClick={(e) => handleLocationClick("footer-link", e)}
+                >
                   change password page
-                  <span
-                    className={hiddenDigitClass}
-                    onMouseEnter={() => handleDigitFound("0", "1")}
-                  >
-                    1
-                  </span>
                 </a>
                 .
               </p>
@@ -597,23 +788,6 @@ const ForgotPassword = ({
           </div>
         </div>
       </div>
-
-      {/* CSS for styling the found digits */}
-      <style>{`
-        .digit-found {
-          position: relative;
-        }
-        .digit-found::after {
-          content: '';
-          position: absolute;
-          width: 10px;
-          height: 10px;
-          background-color: #10B981;
-          border-radius: 50%;
-          top: -5px;
-          right: -5px;
-        }
-      `}</style>
 
       {/* Footer */}
       <div className="mt-auto">
@@ -665,6 +839,34 @@ const ForgotPassword = ({
         </div>
         <div className="bg-gray-100 p-1 text-xs text-gray-600">Release 1.0</div>
       </div>
+
+      {/* CSS for styling the found digits */}
+      <style>{`
+        .digit-found {
+          position: relative;
+        }
+        .digit-found::after {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          background-color: #10B981;
+          border-radius: 50%;
+          top: -5px;
+          right: -5px;
+          z-index: 20;
+        }
+        
+        /* Subtle pulse animation for elements with digits */
+        .group:not(.digit-found):hover {
+          animation: subtle-pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes subtle-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+      `}</style>
     </div>
   );
 };
@@ -974,7 +1176,13 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
 };
 
 // New RiddleHunt component
-const RiddleHunt = ({ onSuccess, startRecording }: { onSuccess: () => void, startRecording: () => void }) => {
+const RiddleHunt = ({
+  onSuccess,
+  startRecording,
+}: {
+  onSuccess: () => void;
+  startRecording: () => void;
+}) => {
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [solved, setSolved] = useState(false);
@@ -994,7 +1202,7 @@ const RiddleHunt = ({ onSuccess, startRecording }: { onSuccess: () => void, star
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newInput = e.target.value;
     setInput(newInput);
-    
+
     // Start recording if correct answer is entered and not already recording
     if (newInput.trim() === secretCode && !isRecording) {
       setIsRecording(true);
@@ -1113,7 +1321,9 @@ const LoginPage: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const blob = new Blob(recordedChunksRef.current, {
+          type: "video/webm",
+        });
         const videoURL = URL.createObjectURL(blob);
         setReactionVideo(videoURL);
       };
@@ -1127,7 +1337,9 @@ const LoginPage: React.FC = () => {
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
     }
   };
 
@@ -1135,11 +1347,13 @@ const LoginPage: React.FC = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       // Stop the stream immediately after getting permission
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       setCameraPermissionGranted(true);
     } catch (err) {
       console.error("Error accessing camera:", err);
-      alert("Camera access is required for the game. Please enable it and refresh the page.");
+      alert(
+        "Camera access is required for the game. Please enable it and refresh the page."
+      );
     }
   };
 
@@ -1374,22 +1588,27 @@ const LoginPage: React.FC = () => {
       {showIntroModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-8 relative">
-            <div className="flex items-center mb-4">
-              <svg
-                className="h-8 w-8 text-[#8C1515] mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+            <div className="flex flex-col items-center">
+              <div className="flex items-center mb-4">
+                <svg
+                  className="h-8 w-8 text-[#8C1515] mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h2 className="text-3xl font-bold text-[#8C1515]">
+                  Stanford Puzzle Gauntlent
+                </h2>
+              </div>
               <h2 className="text-2xl font-bold text-[#8C1515]">
-                Stanford Puzzle Login
+                Level 1: Decision Day Locked Out
               </h2>
             </div>
             <div className="mb-4 text-gray-700">
@@ -1407,7 +1626,8 @@ const LoginPage: React.FC = () => {
                 clues!
               </p>
               <p className="mt-4 text-[#8C1515] font-semibold">
-                Note: Camera access is required to record your reaction when you receive your acceptance letter!
+                Note: Camera access is required to record your reaction when you
+                receive your acceptance letter!
               </p>
             </div>
             <button
@@ -1423,11 +1643,13 @@ const LoginPage: React.FC = () => {
       {showStats && (
         <StatsPage reactionVideo={reactionVideo} timeTaken={timeTaken} />
       )}
-      {showTrivia && triviaSuccess && showMusicPuzzle && showRiddleHunt && !showStats && (
-        <AcceptanceLetter onShowStats={handleShowStats} />
-      )}
+      {showTrivia &&
+        triviaSuccess &&
+        showMusicPuzzle &&
+        showRiddleHunt &&
+        !showStats && <AcceptanceLetter onShowStats={handleShowStats} />}
       {showTrivia && triviaSuccess && showMusicPuzzle && !showRiddleHunt && (
-        <RiddleHunt 
+        <RiddleHunt
           onSuccess={() => {
             setShowRiddleHunt(true);
           }}
