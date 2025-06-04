@@ -127,12 +127,12 @@ const AcceptanceLetter = ({ onShowStats }: { onShowStats: () => void }) => {
             The exciting next step is now yours. As Stanford is probably only
             one of several options you will consider in the coming weeks, I hope
             you will use the time to learn more about us. We invite you to
-            participate in Admit Weekend 2005, a three-day program that will
+            participate in Admit Weekend 2025, a three-day program that will
             introduce you to the intellectual vibrancy and dynamic campus life
             that define Stanford. Information about that event is enclosed.
             Whatever decision you make, we ask that you complete the enclosed
             enrollment response card and return it to us by the postmark
-            deadline of May 2, 2005. Should you decide to matriculate at
+            deadline of May 2, 2025. Should you decide to matriculate at
             Stanford — and we sincerely hope you do — we will send enrollment
             information to you in late May.
           </div>
@@ -983,158 +983,183 @@ const TriviaRecovery = ({ onSuccess }: { onSuccess: () => void }) => {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center">
-      <div className="bg-white shadow-lg rounded-lg p-10 max-w-lg w-full">
-        <h2 className="text-2xl font-bold text-[#8C1515] mb-6">
-          Answer these questions to recover your account
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4 text-lg">{currentQuestion.question}</div>
+      <div className="flex w-full max-w-7xl mx-auto items-center">
+        {/* Left tree */}
+        <div className="w-1/4 flex justify-end items-center">
+          <img
+            src="/tree_stan.png"
+            alt="Stanford Trees"
+            className="h-[650px] max-h-[80vh] object-contain opacity-80"
+          />
+        </div>
 
-          {requiresImage ? (
-            <div className="mb-4">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-              />
+        {/* Main content */}
+        <div className="w-2/4 flex justify-center">
+          <div className="bg-white shadow-lg rounded-lg p-10 max-w-lg w-full">
+            <h2 className="text-2xl font-bold text-[#8C1515] mb-6">
+              Answer these questions to recover your account
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4 text-lg">{currentQuestion.question}</div>
 
-              {!imageUrl ? (
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={triggerFileInput}
-                >
-                  <div className="text-gray-500 mb-2">
-                    Click to upload a photo of the Tower
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Take a clear photo or choose from your gallery
-                  </div>
+              {requiresImage ? (
+                <div className="mb-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                  />
+
+                  {!imageUrl ? (
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={triggerFileInput}
+                    >
+                      <div className="text-gray-500 mb-2">
+                        Click to upload a photo of the Tower
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        Take a clear photo or choose from your gallery
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-4">
+                      <div className="relative rounded-lg overflow-hidden mb-3">
+                        <img
+                          src={imageUrl}
+                          alt="Uploaded"
+                          className="w-full h-48 object-cover"
+                        />
+
+                        {isAnalyzing && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-white">
+                            <div className="text-lg mb-2">
+                              Analyzing image...
+                            </div>
+                            <div className="w-3/4 bg-gray-300 rounded-full h-2.5">
+                              <div
+                                className="bg-blue-600 h-2.5 rounded-full"
+                                style={{ width: `${analyzingProgress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+
+                        {analysisResult === "success" && (
+                          <div className="absolute inset-0 bg-green-500 bg-opacity-50 flex items-center justify-center text-white">
+                            <div className="bg-white bg-opacity-90 rounded-lg p-3 text-green-600 flex items-center">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6 mr-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Hoover Tower recognized!
+                            </div>
+                          </div>
+                        )}
+
+                        {analysisResult === "failure" && (
+                          <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center text-white">
+                            <div className="bg-white bg-opacity-90 rounded-lg p-3 text-red-600 flex items-center">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6 mr-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                              Not recognized as Hoover Tower
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between">
+                        <button
+                          type="button"
+                          className="text-gray-600 bg-gray-100 px-3 py-1 rounded text-sm"
+                          onClick={() => {
+                            setImageUrl(null);
+                            setIsAnalyzing(false);
+                            setAnalyzingProgress(0);
+                            setAnalysisResult(null);
+                            triggerFileInput();
+                          }}
+                        >
+                          Change photo
+                        </button>
+
+                        {analysisResult === "failure" && (
+                          <button
+                            type="button"
+                            className="text-white bg-blue-500 px-3 py-1 rounded text-sm"
+                            onClick={retryAnalysis}
+                          >
+                            Try again
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="mb-4">
-                  <div className="relative rounded-lg overflow-hidden mb-3">
-                    <img
-                      src={imageUrl}
-                      alt="Uploaded"
-                      className="w-full h-48 object-cover"
-                    />
-
-                    {isAnalyzing && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-white">
-                        <div className="text-lg mb-2">Analyzing image...</div>
-                        <div className="w-3/4 bg-gray-300 rounded-full h-2.5">
-                          <div
-                            className="bg-blue-600 h-2.5 rounded-full"
-                            style={{ width: `${analyzingProgress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-
-                    {analysisResult === "success" && (
-                      <div className="absolute inset-0 bg-green-500 bg-opacity-50 flex items-center justify-center text-white">
-                        <div className="bg-white bg-opacity-90 rounded-lg p-3 text-green-600 flex items-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                          Hoover Tower recognized!
-                        </div>
-                      </div>
-                    )}
-
-                    {analysisResult === "failure" && (
-                      <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center text-white">
-                        <div className="bg-white bg-opacity-90 rounded-lg p-3 text-red-600 flex items-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                          Not recognized as Hoover Tower
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between">
-                    <button
-                      type="button"
-                      className="text-gray-600 bg-gray-100 px-3 py-1 rounded text-sm"
-                      onClick={() => {
-                        setImageUrl(null);
-                        setIsAnalyzing(false);
-                        setAnalyzingProgress(0);
-                        setAnalysisResult(null);
-                        triggerFileInput();
-                      }}
-                    >
-                      Change photo
-                    </button>
-
-                    {analysisResult === "failure" && (
-                      <button
-                        type="button"
-                        className="text-white bg-blue-500 px-3 py-1 rounded text-sm"
-                        onClick={retryAnalysis}
-                      >
-                        Try again
-                      </button>
-                    )}
-                  </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="w-full p-2 border border-gray-300 rounded mb-4"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="your answer"
+                    autoFocus
+                  />
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input
-                className="w-full p-2 border border-gray-300 rounded mb-4"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="your answer"
-                autoFocus
-              />
-            </div>
-          )}
 
-          {error && <div className="text-red-600 mb-2">{error}</div>}
+              {error && <div className="text-red-600 mb-2">{error}</div>}
 
-          <button
-            type="submit"
-            className={`w-full py-2 rounded font-medium ${
-              requiresImage && analysisResult === "success"
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-[#8C1515] text-white"
-            }`}
-          >
-            {requiresImage && analysisResult === "success"
-              ? "Continue"
-              : "Submit"}
-          </button>
-        </form>
-        <div className="mt-4 text-sm text-gray-500">
-          Question {step + 1} of {triviaQuestions.length}
+              <button
+                type="submit"
+                className={`w-full py-2 rounded font-medium ${
+                  requiresImage && analysisResult === "success"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-[#8C1515] text-white"
+                }`}
+              >
+                {requiresImage && analysisResult === "success"
+                  ? "Continue"
+                  : "Submit"}
+              </button>
+            </form>
+            <div className="mt-4 text-sm text-gray-500">
+              Question {step + 1} of {triviaQuestions.length}
+            </div>
+          </div>
+        </div>
+
+        {/* Right tree */}
+        <div className="w-1/4 flex justify-start items-center">
+          <img
+            src="/tree_stan.png"
+            alt="Stanford Trees"
+            className="h-[650px] max-h-[80vh] object-contain opacity-80"
+          />
         </div>
       </div>
 
